@@ -46,8 +46,6 @@ func main() {
 		if err != nil {
 			log.Fatalf("failed to create service account")
 		}
-
-		time.Sleep(60 * time.Second)
 	}
 
 	// log the values we're using to create bucket

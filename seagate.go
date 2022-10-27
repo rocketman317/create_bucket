@@ -6,7 +6,8 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
+	"log"
 	"net/http"
 	"time"
 
@@ -62,11 +63,15 @@ func CreateServiceAccount(ctx context.Context, seagateKey, seagateSecret, prefix
 		return "", "", errors.Wrapf(err, "failed to get authentication token")
 	}
 
+	log.Printf("successfully received authentication token")
+
 	// create permission now
 	permissionResponse, err := LyveCreatePermission(ctx, authToken, prefix, prefix)
 	if err != nil {
 		return "", "", errors.Wrapf(err, "failed to create permission")
 	}
+
+	log.Printf("successfully created permission")
 
 	serviceReq := ServiceAccountReq{
 		Name:        prefix,
@@ -86,6 +91,8 @@ func CreateServiceAccount(ctx context.Context, seagateKey, seagateSecret, prefix
 	if err != nil {
 		return "", "", errors.WithMessagef(err, "LyveCreateServiceAccount")
 	}
+
+	log.Printf("successfully created service account")
 
 	key = account.AccessKey
 	secret = account.AccessSecret
@@ -154,9 +161,9 @@ func lyveRESTRequest(ctx context.Context, authToken *LyveAuthToken, apiName stri
 		return []byte{}, fmt.Errorf(apiName+": %s (%s)", res.Status, errorMsg.Error)
 	}
 
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return []byte{}, errors.WithMessagef(err, apiName+": reading body")
 	}
