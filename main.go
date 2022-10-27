@@ -27,7 +27,7 @@ func main() {
 
 	flag.Parse()
 
-	ctx, _ := context.WithTimeout(context.Background(), time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 
 	if *key == "" {
 		log.Fatalf("key is required")
@@ -46,6 +46,8 @@ func main() {
 		if err != nil {
 			log.Fatalf("failed to create service account")
 		}
+
+		time.Sleep(60 * time.Second)
 	}
 
 	// log the values we're using to create bucket
@@ -68,13 +70,24 @@ func main() {
 	// create S3 client
 	svc := s3.New(sess)
 
-	// create a bucket
-	_, err = svc.CreateBucketWithContext(ctx, &s3.CreateBucketInput{
-		Bucket: aws.String(bucketName),
-	})
-	if err != nil {
-		log.Fatalf("failed to create bucket [%v]: %v", bucketName, err)
-	} else {
-		log.Printf("successfully created bucket [%v]", bucketName)
+	// try to create a bucket in a loop
+	counter := 0
+	for {
+		_, err = svc.CreateBucket(&s3.CreateBucketInput{
+			Bucket: aws.String(bucketName),
+		})
+		counter++
+
+		if err != nil {
+			log.Printf("failed to create bucket [%v]: %v", bucketName, err)
+			log.Printf("retrying in a minute...")
+			time.Sleep(time.Minute)
+		} else {
+			log.Printf("successfully created bucket [%v] in attempt nr. [%v]", bucketName, counter)
+			break
+		}
 	}
+
+	// just making goland happy
+	cancel()
 }
