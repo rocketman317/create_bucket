@@ -68,22 +68,16 @@ func main() {
 	// create S3 client
 	svc := s3.New(sess)
 
-	// try to create a bucket in a loop
-	counter := 0
-	for {
-		_, err = svc.CreateBucket(&s3.CreateBucketInput{
-			Bucket: aws.String(bucketName),
-		})
-		counter++
+	// try to create a bucket
+	_, err = svc.CreateBucket(&s3.CreateBucketInput{
+		Bucket: aws.String(bucketName),
+	})
 
-		if err != nil {
-			log.Printf("failed to create bucket [%v]: %v", bucketName, err)
-			log.Printf("retrying in a minute...")
-			time.Sleep(time.Minute)
-		} else {
-			log.Printf("successfully created bucket [%v] in attempt nr. [%v]", bucketName, counter)
-			break
-		}
+	if err != nil {
+		log.Printf("failed to create bucket [%v]: %v", bucketName, err)
+	} else {
+		log.Printf("successfully created bucket [%v] ", bucketName)
+
 	}
 
 	// just making goland happy
